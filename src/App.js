@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import { NICE, SUPER_NICE } from './colors';
+import store from './store';
+
 
 class Counter extends Component {
   constructor(props) {
@@ -32,58 +34,42 @@ class Controls extends Component {
   render() {
     return (
     <div>
-    <button onClick={ this.props.start }>Start</button>
-    <button onClick={ this.props.end }>End</button>
+      <button onClick={ () => store.dispatch({ type: 'START' })}>Start</button>
+      <button onClick={ () => store.dispatch({ type: 'END' })}>End</button>
     </div>
     );
   }
 }
 
 class Ball {
-  constructor(props) {
-    this.props = {};
+  constructor() {
+    this.image = new Image();
+    this.image.src = '/img/bball.png';
   }
-  update(props) {
-    this.props = props;
-    this.render();
+  update() {
+    console.info('updating ball');
   }
   render() {
     var ctx = this.props.context;
     ctx.fillStyle = "rgb(200,0,0)";
-    ctx.fillRect (10, 10, 55, 50);
+    ctx.fillRect (10, 10, 20, 20);
+    ctx.drawImage(this.image,0,0);
   }
 }
 
 export class App extends Component {
-  constructor(props) {
-    super(props);
-    console.info(this.refs);
-    this.state = { context: null };
-    this.ball = new Ball();
-    this.startGame = this.startGame.bind(this);
-    this.endGame = this.endGame.bind(this);
-  }
   componentDidMount() {
-    this.setState(Object.assign({}, this.state, {context: this.refs.canvas.getContext("2d") }));
-    requestAnimationFrame(() => {this.update()});
-  }
-  update() {
-    this.ball.update(this.state);
+    //this.setState(Object.assign({}, this.state, {context: this.refs.canvas.getContext("2d") }));
   }
   render() {
-    var started = this.state.started ? 'yes' : 'no';
+    let started = this.props.started;
+    started = started ? 'yes' : 'no';
     return (
       <div>
         <span>{started}</span>
         <canvas ref="canvas" width="500" height="500" />
-        <Controls start={this.startGame} end={this.endGame}/>
+        <Controls />
       </div>
     );
-  }
-  startGame() {
-    this.setState(Object.assign({}, this.state, {started: true}));
-  }
-  endGame() {
-    this.setState(Object.assign({}, this.state, {started: false}));
   }
 }

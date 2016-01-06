@@ -1,5 +1,14 @@
 import React from 'react';
 import { render } from 'react-dom';
 import { App } from './App';
+import store from './store';
 
-render(<App />, document.getElementById('root'));
+store.subscribe(() => {
+  console.log(store.getState());
+  renderApp();
+});
+
+let renderApp = () => {
+  render(<App {...store.getState()}/>, document.getElementById('root'));
+};
+renderApp();
