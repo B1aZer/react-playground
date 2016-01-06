@@ -11,4 +11,6 @@ store.subscribe(() => {
 let renderApp = () => {
   render(<App {...store.getState()}/>, document.getElementById('root'));
 };
-renderApp();
+window.requestAnimationFrame(function () {
+  renderApp();
+})
