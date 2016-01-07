@@ -13,7 +13,8 @@ function reducer(state, action) {
   case 'END':
     return Object.assign({}, state, {started: false });
   case 'KEY_PRESSED':
-    return Object.assign({}, state, {keys: action.keys });
+    let newState = Object.assign({}, state, {keys: action.keys });
+    return newState;
   default:
     return state;
   }

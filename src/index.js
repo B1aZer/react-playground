@@ -4,7 +4,6 @@ import { App } from './App';
 import store from './store';
 
 store.subscribe(() => {
-  console.log(store.getState());
   renderApp();
 });
 

@@ -37,6 +37,7 @@ const KEY = {
   A: 65,
   D: 68,
   W: 87,
+  S: 83,
   SPACE: 32
 };
 
@@ -56,40 +57,68 @@ class Ball {
   constructor(context) {
     let image = new Image();
     this.image = image;
-    this.speed = 0.15;
     this.position = {
       x: 0,
       y: 0
     }
+    this.velocity = {
+      x: 0,
+      y: 0
+    }
+    this.speed = 2;
+    this.friction = 0.98;
     image.onload = () => {
       // storage.getState()
       context.drawImage(this.image, 0, 0, 20, 20);
     }
     image.src = '/img/bball.png';
   }
-  render(state, context) {
-    if (state.keys.up) {
-      this.position.y -= 10;
+  render(keys, context) {
+    if (keys.up) {
+      //this.position.y -= 10;
+      if (this.velocity.y > -this.speed) {
+        this.velocity.y--;
+      }
     }
-    if (state.keys.right) {
-      this.position.x += 10;
+    if (keys.right) {
+      //this.position.x += 10;
+      if (this.velocity.x < this.speed) {
+        this.velocity.x++;
+      }
     }
-    if (state.keys.down) {
-      this.position.y += 10;
+    if (keys.down) {
+      //this.position.y += 10;
+      if (this.velocity.y < this.speed) {
+        this.velocity.y++;
+      }
     }
-    if (state.keys.left) {
-      this.position.x -= 10;
+    if (keys.left) {
+      //this.position.x -= 10;
+      if (this.velocity.x > -this.speed) {
+        this.velocity.x--;
+      }
     }
-    context.save();
+
+    this.velocity.y *= this.friction;
+    this.position.y += this.velocity.y;
+    this.velocity.x *= this.friction;
+    this.position.x += this.velocity.x;
+
+    //context.save();
     context.clearRect(0, 0, 500, 500);
-    context.fillStyle = "#eee";
-    context.fillRect(0,0,500,500);
+    //context.fillStyle = "#eee";
+    //context.fillRect(0, 0, 500, 500);
     context.drawImage(this.image, this.position.x, this.position.y, 20, 20);
-    context.restore();
+    //context.translate(this.position.x, this.position.y);
+    //context.restore();
   }
 }
 
 export class App extends Component {
+  constructor(props) {
+    super(props);
+    this.keys = {};
+  }
   handleKeys(value, e) {
     // https://github.com/chriz001/Reacteroids/blob/master/src/Reacteroids.js#L5
     let keys = {};
@@ -98,13 +127,14 @@ export class App extends Component {
     if(e.keyCode === KEY.UP     || e.keyCode === KEY.W) keys.up    = value;
     if(e.keyCode === KEY.DOWN   || e.keyCode === KEY.S) keys.down  = value;
     if(e.keyCode === KEY.SPACE) keys.space = value;
-    store.dispatch({ type: 'KEY_PRESSED', keys: keys });
+    //store.dispatch({ type: 'KEY_PRESSED', keys: keys });
+    this.keys = keys;
   }
   componentWillMount() {
   }
   componentDidMount() {
-    window.addEventListener('keydown',   this.handleKeys.bind(this, true));
-    window.addEventListener('keyup',   this.handleKeys.bind(this, false));
+    window.addEventListener('keydown', this.handleKeys.bind(this, true));
+    window.addEventListener('keyup', this.handleKeys.bind(this, false));
     this.startScene();
   }
   componentWillUnmount() {
@@ -115,7 +145,7 @@ export class App extends Component {
   shouldComponentUpdate() {
     // return false if nothing changed
     // request frame #2
-    this.updateCanvas();
+    //this.updateCanvas();
     return true;
   }
   startScene() {
@@ -124,12 +154,14 @@ export class App extends Component {
     context.fillStyle = "#eee";
     context.fillRect(0,0,500,500);
     this.ball = new Ball(context);
+    this.updateCanvas();
   }
   updateCanvas() {
     let canvas = this.refs.canvas;
     let context = canvas.getContext('2d');
-    this.ball.render(this.props, context);
-    //requestAnimationFrame(() => {this.update()});
+    this.ball.render(this.keys, context);
+    requestAnimationFrame(() => {this.updateCanvas()});
+     //setTimeout(() => this.updateCanvas, 10);
   }
   render() {
     let started = this.props.started;
