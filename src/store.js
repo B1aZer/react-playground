@@ -2,7 +2,9 @@ import { createStore } from 'redux';
 
 let initialState = {
   started: false,
-  keys: {}
+  keys: {},
+  width: 1000,
+  height: 500
 };
 
 function reducer(state, action) {

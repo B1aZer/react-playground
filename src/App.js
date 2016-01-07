@@ -54,8 +54,10 @@ class Controls extends Component {
 }
 
 class Ball {
-  constructor(context) {
+  constructor(props, context) {
     let image = new Image();
+    this.width = props.width;
+    this.height = props.height;
     this.image = image;
     this.position = {
       x: 0,
@@ -65,8 +67,8 @@ class Ball {
       x: 0,
       y: 0
     }
-    this.speed = 2;
-    this.friction = 0.98;
+    this.speed = 12;
+    this.friction = 0.9;
     image.onload = () => {
       // storage.getState()
       context.drawImage(this.image, 0, 0, 20, 20);
@@ -104,8 +106,21 @@ class Ball {
     this.velocity.x *= this.friction;
     this.position.x += this.velocity.x;
 
+    if (this.position.x + 50 >= this.width) {
+      this.position.x = this.width - 50;
+    }
+    if (this.position.x - 50 <= 0) {
+      this.position.x = 0 + 50;
+    }
+    if (this.position.y + 50 >= this.height) {
+      this.position.y = this.height - 50;
+    }
+    if (this.position.y - 50 <= 0) {
+      this.position.y = 0 + 50;
+    }
+
     //context.save();
-    context.clearRect(0, 0, 500, 500);
+    context.clearRect(0, 0, this.width, this.height);
     //context.fillStyle = "#eee";
     //context.fillRect(0, 0, 500, 500);
     context.drawImage(this.image, this.position.x, this.position.y, 20, 20);
@@ -153,7 +168,7 @@ export class App extends Component {
     let context = canvas.getContext('2d');
     context.fillStyle = "#eee";
     context.fillRect(0,0,500,500);
-    this.ball = new Ball(context);
+    this.ball = new Ball(this.props, context);
     this.updateCanvas();
   }
   updateCanvas() {
@@ -164,12 +179,15 @@ export class App extends Component {
      //setTimeout(() => this.updateCanvas, 10);
   }
   render() {
+    var canvasStyle = {
+      border: '1px solid #eee'
+    };
     let started = this.props.started;
     started = started ? 'yes' : 'no';
     return (
       <div>
         <span>{started}</span>
-        <canvas ref="canvas" width="500" height="500" />
+        <canvas ref="canvas" style={canvasStyle} width={this.props.width} height={this.props.height} />
         <Controls />
       </div>
     );
