@@ -136,7 +136,7 @@ export class App extends Component {
   }
   handleKeys(value, e) {
     // https://github.com/chriz001/Reacteroids/blob/master/src/Reacteroids.js#L5
-    let keys = {};
+    let keys = this.keys;
     if(e.keyCode === KEY.LEFT   || e.keyCode === KEY.A) keys.left  = value;
     if(e.keyCode === KEY.RIGHT  || e.keyCode === KEY.D) keys.right = value;
     if(e.keyCode === KEY.UP     || e.keyCode === KEY.W) keys.up    = value;
@@ -176,7 +176,7 @@ export class App extends Component {
     let context = canvas.getContext('2d');
     this.ball.render(this.keys, context);
     requestAnimationFrame(() => {this.updateCanvas()});
-     //setTimeout(() => this.updateCanvas, 10);
+     //setTimeout(() => this.updateCanvas(), 10);
   }
   render() {
     var canvasStyle = {
