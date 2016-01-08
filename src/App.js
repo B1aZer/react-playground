@@ -42,6 +42,60 @@ const KEY = {
 };
 
 
+function rect(ctx, x, y, w, h) {
+  ctx.beginPath();
+  ctx.fillStyle = "#222";
+  ctx.rect(x,y,w,h);
+  ctx.closePath();
+  ctx.fill();
+}
+
+
+function move(keys, obj) {
+  if (keys.up) {
+    if (obj.velocity.y > -obj.speed) {
+      obj.velocity.y--;
+    }
+  }
+  if (keys.right) {
+    if (obj.velocity.x < obj.speed) {
+      obj.velocity.x++;
+    }
+  }
+  if (keys.down) {
+    if (obj.velocity.y < obj.speed) {
+      obj.velocity.y++;
+    }
+  }
+  if (keys.left) {
+    if (obj.velocity.x > -obj.speed) {
+      obj.velocity.x--;
+    }
+  }
+  obj.velocity.y *= obj.friction;
+  obj.position.y += obj.velocity.y;
+  obj.velocity.x *= obj.friction;
+  obj.position.x += obj.velocity.x;
+}
+
+
+function RectCircleColliding(circle, rect) {
+    var distX = Math.abs(circle.position.x - rect.position.x - rect.width/2);
+    var distY = Math.abs(circle.position.y - rect.position.y - rect.height/2);
+
+    if (distX > (rect.width/2 + circle.radius)) { return false; }
+    if (distY > (rect.height/2 + circle.radius)) { return false; }
+
+    if (distX <= (rect.width/2)) { return true; }
+    if (distY <= (rect.height/2)) { return true; }
+
+    var dx=distX-rect.width/2;
+    var dy=distY-rect.height/2;
+
+    return (dx*dx+dy*dy<=(circle.radius*circle.radius));
+}
+
+
 class Controls extends Component {
   render() {
     return (
@@ -90,43 +144,6 @@ class Box {
 }
 
 
-function rect(ctx, x, y, w, h) {
-  ctx.beginPath();
-  ctx.fillStyle = "#222";
-  ctx.rect(x,y,w,h);
-  ctx.closePath();
-  ctx.fill();
-}
-
-
-function move(keys, obj) {
-  if (keys.up) {
-    if (obj.velocity.y > -obj.speed) {
-      obj.velocity.y--;
-    }
-  }
-  if (keys.right) {
-    if (obj.velocity.x < obj.speed) {
-      obj.velocity.x++;
-    }
-  }
-  if (keys.down) {
-    if (obj.velocity.y < obj.speed) {
-      obj.velocity.y++;
-    }
-  }
-  if (keys.left) {
-    if (obj.velocity.x > -obj.speed) {
-      obj.velocity.x--;
-    }
-  }
-  obj.velocity.y *= obj.friction;
-  obj.position.y += obj.velocity.y;
-  obj.velocity.x *= obj.friction;
-  obj.position.x += obj.velocity.x;
-}
-
-
 class Ball {
   constructor(props, context) {
     let image = new Image();
@@ -135,7 +152,7 @@ class Ball {
     this.max_height = props.height;
     this.position = {
       x: 150,
-      y: 50
+      y: 80
     }
     this.velocity = {
       x: 0,
@@ -144,20 +161,31 @@ class Ball {
     this.speed = 10;
     this.width = 40;
     this.height = 40;
-    this.friction = 0.95;
+    this.radius = 20;
+    this.friction = 0.98;
     image.onload = () => {
-      // storage.getState()
       context.drawImage(this.image, this.position.x, this.position.y, this.width, this.height);
     }
     image.src = '/img/bball.png';
   }
+  accelerate() {
+    this.velocity.x += 1;
+  }
   render(keys, context) {
     var time = new Date();
-    context.drawImage(this.image, this.position.x, this.position.y, this.width, this.height);
-    this.position.x += this.velocity.x;
+    //context.drawImage(this.image, this.position.x, this.position.y, this.width, this.height);
+    context.beginPath();
+    context.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2, true);
+    context.closePath();
+    context.fill();
+
+    this.velocity.y *= this.friction;
     this.position.y += this.velocity.y;
+    this.velocity.x *= this.friction;
+    this.position.x += this.velocity.x;
   }
 }
+
 
 export class App extends Component {
   constructor(props) {
@@ -172,7 +200,6 @@ export class App extends Component {
     if(e.keyCode === KEY.UP     || e.keyCode === KEY.W) keys.up    = value;
     if(e.keyCode === KEY.DOWN   || e.keyCode === KEY.S) keys.down  = value;
     if(e.keyCode === KEY.SPACE) keys.space = value;
-    //store.dispatch({ type: 'KEY_PRESSED', keys: keys });
     this.keys = keys;
   }
   componentWillMount() {
@@ -189,25 +216,24 @@ export class App extends Component {
   }
   shouldComponentUpdate() {
     // return false if nothing changed
-    // request frame #2
-    //this.updateCanvas();
     return true;
   }
   startScene() {
     let canvas = this.refs.canvas;
-    let context = canvas.getContext('2d');
-    context.fillStyle = "#eee";
-    context.fillRect(0,0,500,500);
-    this.ball = new Ball(this.props, context);
-    this.box = new Box(this.props, context);
+    this.context = canvas.getContext('2d');
+    this.context.fillStyle = "#eee";
+    this.context.fillRect(0,0,500,500);
+    this.ball = new Ball(this.props, this.context);
+    this.box = new Box(this.props, this.context);
     this.updateCanvas();
   }
   updateCanvas() {
-    let canvas = this.refs.canvas;
-    let context = canvas.getContext('2d');
-    context.clearRect(0, 0, this.props.width, this.props.height);
-    this.ball.render(this.keys, context);
-    this.box.render(this.keys, context);
+    this.context.clearRect(0, 0, this.props.width, this.props.height);
+    this.ball.render(this.keys, this.context);
+    this.box.render(this.keys, this.context);
+    if (RectCircleColliding(this.ball, this.box)) {
+      this.ball.accelerate();
+    }
     requestAnimationFrame(() => {this.updateCanvas()});
   }
   render() {
