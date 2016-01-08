@@ -51,33 +51,6 @@ function rect(ctx, x, y, w, h) {
 }
 
 
-function move(keys, obj) {
-  if (keys.up) {
-    if (obj.velocity.y > -obj.speed) {
-      obj.velocity.y--;
-    }
-  }
-  if (keys.right) {
-    if (obj.velocity.x < obj.speed) {
-      obj.velocity.x++;
-    }
-  }
-  if (keys.down) {
-    if (obj.velocity.y < obj.speed) {
-      obj.velocity.y++;
-    }
-  }
-  if (keys.left) {
-    if (obj.velocity.x > -obj.speed) {
-      obj.velocity.x--;
-    }
-  }
-  obj.velocity.y *= obj.friction;
-  obj.position.y += obj.velocity.y;
-  obj.velocity.x *= obj.friction;
-  obj.position.x += obj.velocity.x;
-}
-
 
 function RectCircleColliding(circle, rect) {
     var distX = Math.abs(circle.position.x - rect.position.x - rect.width/2);
@@ -122,11 +95,38 @@ class Box {
     }
     this.width = 10;
     this.height = 70;
-    this.speed = 12;
+    this.max_speed = 20;
+    this.speed = 2;
     this.friction = 0.9;
   }
+  move(keys) {
+    if (keys.up) {
+      if (this.velocity.y > -this.max_speed) {
+        this.velocity.y = this.velocity.y - this.speed;
+      }
+    }
+    if (keys.right) {
+      if (this.velocity.x < this.max_speed) {
+        this.velocity.x = this.velocity.x + this.speed;
+      }
+    }
+    if (keys.down) {
+      if (this.velocity.y < this.max_speed) {
+        this.velocity.y = this.velocity.y + this.speed;
+      }
+    }
+    if (keys.left) {
+      if (this.velocity.x > -this.max_speed) {
+        this.velocity.x = this.velocity.x - this.speed;
+      }
+    }
+    this.velocity.y *= this.friction;
+    this.position.y += this.velocity.y;
+    this.velocity.x *= this.friction;
+    this.position.x += this.velocity.x;
+  }
   render(keys, context) {
-    move(keys, this);
+    this.move(keys);
     if (this.position.x + 500 >= this.max_width) {
       this.position.x = this.max_width - 500;
     }
@@ -167,9 +167,6 @@ class Ball {
       context.drawImage(this.image, this.position.x, this.position.y, this.width, this.height);
     }
     image.src = '/img/bball.png';
-  }
-  accelerate() {
-    this.velocity.x += 1;
   }
   render(keys, context) {
     var time = new Date();
@@ -232,7 +229,10 @@ export class App extends Component {
     this.ball.render(this.keys, this.context);
     this.box.render(this.keys, this.context);
     if (RectCircleColliding(this.ball, this.box)) {
-      this.ball.accelerate();
+      console.info(this.ball.velocity);
+      console.info(this.box.velocity);
+      this.ball.velocity.x = this.box.velocity.x * 1.1;
+      this.ball.velocity.y = this.box.velocity.y * 1.1;
     }
     requestAnimationFrame(() => {this.updateCanvas()});
   }
