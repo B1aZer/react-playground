@@ -53,12 +53,11 @@ class Controls extends Component {
   }
 }
 
-class Ball {
+
+class Box {
   constructor(props, context) {
-    let image = new Image();
-    this.width = props.width;
-    this.height = props.height;
-    this.image = image;
+    this.max_width = props.width;
+    this.max_height = props.height;
     this.position = {
       x: 0,
       y: 0
@@ -67,65 +66,96 @@ class Ball {
       x: 0,
       y: 0
     }
+    this.width = 10;
+    this.height = 70;
     this.speed = 12;
     this.friction = 0.9;
-    image.onload = () => {
-      // storage.getState()
-      context.drawImage(this.image, 0, 0, 20, 20);
-    }
-    image.src = '/img/bball.png';
   }
   render(keys, context) {
-    if (keys.up) {
-      //this.position.y -= 10;
-      if (this.velocity.y > -this.speed) {
-        this.velocity.y--;
-      }
-    }
-    if (keys.right) {
-      //this.position.x += 10;
-      if (this.velocity.x < this.speed) {
-        this.velocity.x++;
-      }
-    }
-    if (keys.down) {
-      //this.position.y += 10;
-      if (this.velocity.y < this.speed) {
-        this.velocity.y++;
-      }
-    }
-    if (keys.left) {
-      //this.position.x -= 10;
-      if (this.velocity.x > -this.speed) {
-        this.velocity.x--;
-      }
-    }
-
-    this.velocity.y *= this.friction;
-    this.position.y += this.velocity.y;
-    this.velocity.x *= this.friction;
-    this.position.x += this.velocity.x;
-
-    if (this.position.x + 50 >= this.width) {
-      this.position.x = this.width - 50;
+    move(keys, this);
+    if (this.position.x + 500 >= this.max_width) {
+      this.position.x = this.max_width - 500;
     }
     if (this.position.x - 50 <= 0) {
       this.position.x = 0 + 50;
     }
-    if (this.position.y + 50 >= this.height) {
-      this.position.y = this.height - 50;
+    if (this.position.y + 100 >= this.max_height) {
+      this.position.y = this.max_height - 100;
     }
     if (this.position.y - 50 <= 0) {
       this.position.y = 0 + 50;
     }
+    rect(context, this.position.x, this.position.y, this.width, this.height);
+  }
+}
 
-    //context.save();
-    context.clearRect(0, 0, this.width, this.height);
-    //context.fillStyle = "#eee";
-    //context.fillRect(0, 0, 500, 500);
-    context.drawImage(this.image, this.position.x, this.position.y, 20, 20);
-    //context.translate(this.position.x, this.position.y);
-    //context.restore();
+
+function rect(ctx, x, y, w, h) {
+  ctx.beginPath();
+  ctx.fillStyle = "#222";
+  ctx.rect(x,y,w,h);
+  ctx.closePath();
+  ctx.fill();
+}
+
+
+function move(keys, obj) {
+  if (keys.up) {
+    if (obj.velocity.y > -obj.speed) {
+      obj.velocity.y--;
+    }
+  }
+  if (keys.right) {
+    if (obj.velocity.x < obj.speed) {
+      obj.velocity.x++;
+    }
+  }
+  if (keys.down) {
+    if (obj.velocity.y < obj.speed) {
+      obj.velocity.y++;
+    }
+  }
+  if (keys.left) {
+    if (obj.velocity.x > -obj.speed) {
+      obj.velocity.x--;
+    }
+  }
+  obj.velocity.y *= obj.friction;
+  obj.position.y += obj.velocity.y;
+  obj.velocity.x *= obj.friction;
+  obj.position.x += obj.velocity.x;
+}
+
+
+class Ball {
+  constructor(props, context) {
+    let image = new Image();
+    this.image = image;
+    this.max_width = props.width;
+    this.max_height = props.height;
+    this.position = {
+      x: 150,
+      y: 50
+    }
+    this.velocity = {
+      x: 0,
+      y: 0
+    }
+    this.speed = 10;
+    this.width = 40;
+    this.height = 40;
+    this.friction = 0.95;
+    image.onload = () => {
+      // storage.getState()
+      context.drawImage(this.image, this.position.x, this.position.y, this.width, this.height);
+    }
+    image.src = '/img/bball.png';
+  }
+  render(keys, context) {
+    var time = new Date();
+    context.drawImage(this.image, this.position.x, this.position.y, this.width, this.height);
+    this.position.x += this.velocity.x;
+    this.position.y += this.velocity.y;
   }
 }
 
@@ -169,14 +199,16 @@ export class App extends Component {
     context.fillStyle = "#eee";
     context.fillRect(0,0,500,500);
     this.ball = new Ball(this.props, context);
+    this.box = new Box(this.props, context);
     this.updateCanvas();
   }
   updateCanvas() {
     let canvas = this.refs.canvas;
     let context = canvas.getContext('2d');
+    context.clearRect(0, 0, this.props.width, this.props.height);
     this.ball.render(this.keys, context);
+    this.box.render(this.keys, context);
     requestAnimationFrame(() => {this.updateCanvas()});
-     //setTimeout(() => this.updateCanvas(), 10);
   }
   render() {
     var canvasStyle = {
