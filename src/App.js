@@ -55,17 +55,51 @@ function rect(ctx, x, y, w, h) {
 function RectCircleColliding(circle, rect) {
     var distX = Math.abs(circle.position.x - rect.position.x - rect.width/2);
     var distY = Math.abs(circle.position.y - rect.position.y - rect.height/2);
+    let distance = {
+      x: distX,
+      y: distY
+    }
 
-    if (distX > (rect.width/2 + circle.radius)) { return false; }
-    if (distY > (rect.height/2 + circle.radius)) { return false; }
+    if (distX > (rect.width/2 + circle.radius)) {
+      distance.x = distX + (rect.width/2 + circle.radius);
+      distance.y = distY;
+      console.info('noX');
+      console.info(distance);
+      return distance;
+    }
+    if (distY > (rect.height/2 + circle.radius)) {
+      distance.x = distX;
+      distance.y = distY - (rect.height/2 + circle.radius);
+      console.info('noY');
+      console.info(distance);
+      return distance;
+    }
 
-    if (distX <= (rect.width/2)) { return true; }
-    if (distY <= (rect.height/2)) { return true; }
+    if (distX <= (rect.width/2)) {
+      distance.x = -distX;
+      distance.y = -distY;
+      console.info('yesX');
+      console.info(distance);
+      return distance;
+    }
+    if (distY <= (rect.height/2)) {
+      distance.x = -distX;
+      distance.y = -distY;
+      console.info('yesY');
+      console.info(distance);
+      return distance;
+    }
 
     var dx=distX-rect.width/2;
     var dy=distY-rect.height/2;
 
-    return (dx*dx+dy*dy<=(circle.radius*circle.radius));
+    if ((dx*dx+dy*dy) <= (circle.radius*circle.radius)) {
+      distance.x = -dx;
+      distance.y = -dy;
+      console.info('pif');
+    }
+    console.info(distance);
+    return distance;
 }
 
 
@@ -96,7 +130,7 @@ class Box {
     this.width = 10;
     this.height = 70;
     this.max_speed = 20;
-    this.speed = 2;
+    this.speed = 0.5;
     this.friction = 0.9;
   }
   move(keys) {
@@ -127,17 +161,17 @@ class Box {
   }
   render(keys, context) {
     this.move(keys);
-    if (this.position.x + 500 >= this.max_width) {
-      this.position.x = this.max_width - 500;
+    if (this.position.x + this.max_width/2 >= this.max_width) {
+      this.position.x = this.max_width - this.max_width/2;
     }
-    if (this.position.x - 50 <= 0) {
-      this.position.x = 0 + 50;
+    if (this.position.x - this.width <= 0) {
+      this.position.x = 0 + this.width;
     }
-    if (this.position.y + 100 >= this.max_height) {
-      this.position.y = this.max_height - 100;
+    if (this.position.y + this.height >= this.max_height) {
+      this.position.y = this.max_height - this.height;
     }
-    if (this.position.y - 50 <= 0) {
-      this.position.y = 0 + 50;
+    if (this.position.y - this.width <= 0) {
+      this.position.y = 0 + this.width;
     }
     rect(context, this.position.x, this.position.y, this.width, this.height);
   }
@@ -152,7 +186,7 @@ class Ball {
     this.max_height = props.height;
     this.position = {
       x: 150,
-      y: 80
+      y: 180
     }
     this.velocity = {
       x: 0,
@@ -169,7 +203,6 @@ class Ball {
     image.src = '/img/bball.png';
   }
   render(keys, context) {
-    var time = new Date();
     //context.drawImage(this.image, this.position.x, this.position.y, this.width, this.height);
     context.beginPath();
     context.arc(this.position.x, this.position.y, this.radius, 0, Math.PI * 2, true);
@@ -180,6 +213,20 @@ class Ball {
     this.position.y += this.velocity.y;
     this.velocity.x *= this.friction;
     this.position.x += this.velocity.x;
+
+    if (this.position.x + this.radius > this.max_width) {
+      this.velocity.x = -this.velocity.x
+    }
+    if (this.position.x - this.radius <= 0) {
+      this.velocity.x = -this.velocity.x
+    }
+    if (this.position.y + this.radius >= this.max_height) {
+      this.velocity.y = -this.velocity.y;
+    }
+    if (this.position.y - this.radius <= 0) {
+      this.velocity.y = -this.velocity.y;
+    }
+
   }
 }
 
@@ -228,11 +275,24 @@ export class App extends Component {
     this.context.clearRect(0, 0, this.props.width, this.props.height);
     this.ball.render(this.keys, this.context);
     this.box.render(this.keys, this.context);
-    if (RectCircleColliding(this.ball, this.box)) {
-      console.info(this.ball.velocity);
-      console.info(this.box.velocity);
-      this.ball.velocity.x = this.box.velocity.x * 1.1;
-      this.ball.velocity.y = this.box.velocity.y * 1.1;
+    let distance = RectCircleColliding(this.ball, this.box);
+    if (distance.x < 0 || distance.y < 0) {
+      let massBox = 1.1;
+      let massBall = 0.4;
+      let collisionMomentum = 5.98;
+      //console.info(this.ball.velocity);
+      //console.info(this.box.velocity);
+      //this.ball.position.x += distance.x;
+      //this.ball.position.y += distance.y;
+      /*
+      if (this.ball.velocity.x * this.ball.velocity.y > this.box.velocity.x * this.box.velocity.y) {
+        this.box.velocity.x = this.ball.velocity.x * massBall * collisionMomentum;
+        this.box.velocity.y = this.ball.velocity.y * massBall * collisionMomentum;
+      } else {
+        this.ball.velocity.x = this.box.velocity.x * massBox * collisionMomentum;
+        this.ball.velocity.y = this.box.velocity.y * massBox * collisionMomentum;
+      }
+     */
     }
     requestAnimationFrame(() => {this.updateCanvas()});
   }
